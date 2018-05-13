@@ -4,16 +4,19 @@ Created on Fri May 11 12:31:35 2018
 
 @author: paprasad
 """
+"""
 
+"""
 import nltk
 import pandas as pd
 import numpy as np
 
-
-folder = 'd:\Profiles\paprasad\python\Text Classification\Bug Traiger'
-file_name='\SMART_UKR_Jan2018_data_CSV.csv'
+lemmatizer = nltk.stem.WordNetLemmatizer()
+w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+folder = '/media/pawan/New Volume/Textclassifier/Bug Traiger'
+file_name='/Bug_ReportFinal pipe splitted.csv'
 path = folder+file_name
-xl = pd.ExcelFile(path)
+#xl = pd.ExcelFile(path)
 
 
 
@@ -21,70 +24,94 @@ from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.naive_bayes import MultinomialNB,BernoulliNB
 from sklearn.linear_model import LogisticRegression,SGDClassifier
 from sklearn.svm import SVC, LinearSVC, NuSVC
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.model_selection import GridSearchCV
+
+
+from nltk.stem.snowball import SnowballStemmer
+stemmer = SnowballStemmer("english", ignore_stopwords=True)
+
+class StemmedCountVectorizer(CountVectorizer):
+    def build_analyzer(self):
+        analyzer = super(StemmedCountVectorizer, self).build_analyzer()
+        return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
+stemmed_count_vect = StemmedCountVectorizer(stop_words='english')
+
+
+
+
+parameters = {'vect__ngram_range': [(1, 1), (1, 2)],'tfidf__use_idf': (True, False),'clf__alpha': (1e-2, 1e-3),}
+
+def lemmatize_text(text):
+    temp=''
+    for w in w_tokenizer.tokenize(text):
+        temp = temp+' '+lemmatizer.lemmatize(w)
+    return temp
+
+
 
 def model(data):
     
     numpy_array = data.as_matrix()
-    features  = numpy_array[:,1]
-    lables  = numpy_array[:,0]
-    #document = list(zip(features, lables))
-    
-    #documents = dict(zip(features, lables))
-    documents = [(features,lables)]
-    print(type(documents))
-    
-    featuresets = [(features, lables) for (features, lables) in documents]
-    
-    # set that we'll train our classifier with
-    training_set = featuresets[:1900]
-    
-    # set that we'll test against.
-    testing_set = featuresets[1900:]
-    
-    print ("recahed here-----------------------------------------------")
-    
-    MNB_classifier = SklearnClassifier(MultinomialNB())
-    MNB_classifier.train(training_set)
-    print("MultinomialNB accuracy percent:",nltk.classify.accuracy(MNB_classifier, testing_set))
-    BNB_classifier = SklearnClassifier(BernoulliNB())
-    BNB_classifier.train(training_set)
-    print("BernoulliNB accuracy percent:",nltk.classify.accuracy(BNB_classifier, testing_set))
-    print("Original Naive Bayes Algo accuracy percent:", (nltk.classify.accuracy(classifier, testing_set))*100)
-    #classifier.show_most_informative_features(15)
-        
-    LogisticRegression_classifier = SklearnClassifier(LogisticRegression())
-    LogisticRegression_classifier.train(training_set)
-    print("LogisticRegression_classifier accuracy percent:", (nltk.classify.accuracy(LogisticRegression_classifier, testing_set))*100)
-    
-    SGDClassifier_classifier = SklearnClassifier(SGDClassifier())
-    SGDClassifier_classifier.train(training_set)
-    print("SGDClassifier_classifier accuracy percent:", (nltk.classify.accuracy(SGDClassifier_classifier, testing_set))*100)
-    
-    SVC_classifier = SklearnClassifier(SVC())
-    SVC_classifier.train(training_set)
-    print("SVC_classifier accuracy percent:", (nltk.classify.accuracy(SVC_classifier, testing_set))*100)
-    
-    LinearSVC_classifier = SklearnClassifier(LinearSVC())
-    LinearSVC_classifier.train(training_set)
-    print("LinearSVC_classifier accuracy percent:", (nltk.classify.accuracy(LinearSVC_classifier, testing_set))*100)
-    
-    NuSVC_classifier = SklearnClassifier(NuSVC())
-    NuSVC_classifier.train(training_set)
-    print("NuSVC_classifier accuracy percent:", (nltk.classify.accuracy(NuSVC_classifier, testing_set))*100)
+    X  = numpy_array[:,2]
+    Y  = numpy_array[:,0]
     
     
-def text_classification(sheet):
-   df = xl.parse(sheet)
-   df = df.replace(r'\n',' ', regex=True) 
-   #df = df.replace(r';',' ', regex=True) 
-#   df = df.replace(r'>',' ', regex=True) 
-   model(df)
-   
-   
-   
-   
+    
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.4, random_state=42)
+    #MultinomialNB
+    MultinomialNB_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf', MultinomialNB()),])
+    MultinomialNB_clf = MultinomialNB_clf.fit(X_train,Y_train)
+    predicted = MultinomialNB_clf.predict(X_test)
+    print('accuracy of MultinomialNB_clf', np.mean(predicted == Y_test))
+    
+    #BernoulliNB
+#    BernoulliNB_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf', BernoulliNB()),])
+#    BernoulliNB_clf = BernoulliNB_clf.fit(X_train,Y_train)
+#    predicted = BernoulliNB_clf.predict(X_test)
+#    print('accuracy of BernoulliNB_clf', np.mean(predicted == Y_test))
+#    #SVM 
+    SGDClassifier_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf-svm', SGDClassifier(loss='hinge', penalty='l2',alpha=1e-3, n_iter=5, random_state=42)),])
+    SGDClassifier_clf = SGDClassifier_clf.fit(X_train,Y_train)
+    predicted  = SGDClassifier_clf.predict(X_test)
+    print('accuracy of SGDClassifier_clf', np.mean(predicted == Y_test))
+    
+    
+    LogisticRegression_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf-svm', LogisticRegression()),])
+    LogisticRegression_clf = LogisticRegression_clf.fit(X_train,Y_train)
+    predicted  = LogisticRegression_clf.predict(X_test)
+    print('accuracy of LogisticRegression_clf', np.mean(predicted == Y_test))
+    
+    SVC_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf-svm', SVC()),])
+    SVC_clf = SVC_clf.fit(X_train,Y_train)
+    predicted  = SVC_clf.predict(X_test)
+    print('accuracy of SVC_clf', np.mean(predicted == Y_test))
+    
+    LinearSVC_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf-svm', LinearSVC()),])
+    LinearSVC_clf = LinearSVC_clf.fit(X_train,Y_train)
+    predicted  = LinearSVC_clf.predict(X_test)
+    print('accuracy of LinearSVC_clf', np.mean(predicted == Y_test))
+    
+    
+    NuSVC_clf = Pipeline([('vect', stemmed_count_vect),('tfidf', TfidfTransformer()),('clf-svm', NuSVC()),])
+    NuSVC_clf = NuSVC_clf.fit(X_train,Y_train)
+    predicted  = NuSVC_clf.predict(X_test)
+    print('accuracy of NuSVC_clf', np.mean(predicted == Y_test))
+#    gs_clf = GridSearchCV(MultinomialNB_clf, parameters, n_jobs=-1)
+#    gs_clf = gs_clf.fit(X_train, Y_train)
+#    score_1 = gs_clf.best_score_
+#    param_1 = gs_clf.best_params_
+#    print(param_1)
 
+df = pd.read_csv(path,encoding='iso-8859-1')
+df = df.dropna(how='any',axis=0)
+df = df.replace(r'\\n',' ', regex=True) 
+df.columns = ['Assignee', 'Email']
+df['text_lemmatized'] = df.Email.apply(lemmatize_text)
+#print (df.iloc[:,2])
 
-for sheet in xl.sheet_names:
-    table_name = sheet
-    text_classification(sheet)   
+#print (df)
+model(df)       
