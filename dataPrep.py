@@ -22,10 +22,13 @@ from sklearn.preprocessing import LabelBinarizer
 from nltk.tokenize import sent_tokenize, word_tokenize
 
 
+from sklearn.model_selection import train_test_split
+
+
 ps = PorterStemmer()
 
 
-def conv_pdf(file):
+def conv_to_df(file):
     df = pd.read_csv(file,encoding='utf-8')
     return df
 
@@ -48,10 +51,6 @@ def data_cleaning(df):
    df = df.replace(r';',' ', regex=True)
    df['text_lemmatized'] = df.Email.apply(lemmatize_text)
    df.text_lemmatized = df.Email.apply(text_stemming)
-   #plt.hist(df['Assignee'],)
-   #df['text_lemmatized'] = df.Email.apply(lemmatize_text) 
-   print("-------------------------unique lables ----------------------------------\n\n\n")
-   print(df.Assignee.unique())
    return df
 
 
@@ -68,7 +67,7 @@ def text_stemming(text):
         temp = temp+' '+ ps.stem(w)
     return temp   
 
-def creating_datset_labesl(df,X_col_index, Y_col_index):
+def creating_datset_labels(df,X_col_index, Y_col_index):
     X = df.iloc[:, X_col_index].values
     Y = df.iloc[:, Y_col_index].values
     return X,Y
@@ -81,7 +80,7 @@ def getUnique(df, feature_name):
     return df.Assignee.unique()
 
 
-def feature_extaction(X):
+def feature_extaction_tfidf(X):
     vectorizer = TfidfVectorizer(min_df=1,lowercase=True,stop_words=stop_words)
     feature_mat = vectorizer.fit_transform(X)
     idf = vectorizer.idf_
@@ -132,12 +131,16 @@ def StopWords(text):
 
 
 
-df = conv_pdf("report_clean.csv")
-
-df = data_cleaning(df)
-X,Y = creating_datset_labesl(df,1,0)
-X_train, X_test,Y_train,Y_test = train_test_split(X,Y, test_size = 0.2,random_state =0)
-
-X_feature_tr = feature_extaction(X_train)
-
-Y_enc = categrorical_data_enc(Y_train)
+def data_spilt(X,y,test_ratio,rnd_state):
+     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=test_ratio, random_state=rnd_state)
+     return  X_train, X_test, Y_train, Y_test
+#
+#df = conv_pdf("report_clean.csv")
+#
+#df = data_cleaning(df)
+#X,Y = creating_datset_labesl(df,1,0)
+#X_train, X_test,Y_train,Y_test = train_test_split(X,Y, test_size = 0.2,random_state =0)
+#
+#X_feature_tr = feature_extaction(X_train)
+#
+#Y_enc = categrorical_data_enc(Y_train)
