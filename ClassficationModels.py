@@ -42,9 +42,9 @@ def LogisticRegression_implmenation(X_train, X_test, Y_train, Y_test):
     accuracy =  np.mean(predicted == Y_test)
     return LogisticRegression_clf,accuracy
 
-def LinearSVC_implmenation(X_train, X_test, Y_train, Y_train):
+def LinearSVC_implmenation(X_train, X_test, Y_train, Y_test):
     LinearSVC_clf = LinearSVC()
-    LinearSVC_clf = LinearSVC_clf.fit(X_train,Y_test)
+    LinearSVC_clf = LinearSVC_clf.fit(X_train,Y_train)
     predicted = LinearSVC_clf.predict(X_test)
     accuracy =  np.mean(predicted == Y_test)
     return LinearSVC_clf,accuracy
