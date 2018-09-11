@@ -15,7 +15,7 @@ def MultinomialNB_implmenation(X_train, X_test, Y_train, Y_test,alpha = 1.0, fit
     MultinomialNB_clf = MultinomialNB(alpha = alpha, fit_prior = fit_prior, class_prior = class_prior)
     MultinomialNB_clf = MultinomialNB_clf.fit(X_train,Y_train)
     predicted = MultinomialNB_clf.predict(X_test)
-    accuracy =  np.mean(predicted == Y_test)
+    accuracy =  np.mean(predicted == Y_test) 
     return MultinomialNB_clf,accuracy
 
 

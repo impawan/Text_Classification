@@ -6,28 +6,45 @@ Created on Sat Aug 25 11:48:11 2018
 """
 
 from dataPrep import *
-from ClassficationModels import * 
+from DbUtilities import *
+#from ClassficationModels import * 
 from model_utility import * 
+from TextClassModels import*
 
-file_name = "SMART_UKR_Jan2018_data_CSV.csv"
-#file_name = "TestData_SMARTReport_JUN.xlsx"
-df = conv_excl_to_df(file_name)
 
+###################### reading from csv  ############################################################
+#
+#file_name = "SMART_UKR_Jan2018_data_CSV.csv"   #file_name = "TestData_SMARTReport_JUN.xlsx"
+
+#df = conv_excl_to_df(file_name)
+
+
+##################################################################################################
 #df = silce_df(df,2,4)
+
+ConnParam = load_DBconfig()
+DbConn = conn(ConnParam['hostname'],ConnParam['port'],ConnParam['username'],ConnParam['password'],ConnParam['schema'])
+
+SQLquery = 'SELECT ticket_assigned,ticket_desc FROM smart_machine.ticket_master;'
+df = dataframe_from_db(SQLquery,DbConn) 
+
+
+
 
 df = data_cleaning(df)
 
 
-df.to_csv('data_frame_raw.csv',sep =',')
+#df.to_csv('data_frame_raw.csv',sep =',')
 
 #df['text_lemmatized'] = df.Email.apply(lemmatize_text)
 #df.text_lemmatized = df.text_lemmatized.apply(StopWords)
      
 X,y = creating_datset_labels(df,1,0)
 
-X,vectorizer = feature_extarction_tfidf(X)
+#X,vectorizer = feature_extarction_tfidf(X)
 
-save_model(vectorizer,"vectorizer")
+
+#save_model(vectorizer,"vectorizer")
 
 
 X_train, X_test, Y_train, Y_test  = data_spilt(X,y,0.3,42)
@@ -54,6 +71,6 @@ print('LogisticRegression_clf ----> ',LogisticRegression_accuracy)
 save_model(LogisticRegression_clf,"LogisticRegression")
 
 
-RandomForestClassifier_clf,RandomForestClassifier_accuracy = RandomForestClassifier_impmenation(X_train, X_test, Y_train, Y_test)
+RandomForestClassifier_clf,RandomForestClassifier_accuracy = RandomForestClassifier_implmenation(X_train, X_test, Y_train, Y_test)
 print('RandomForestClassifier_clf ----> ',RandomForestClassifier_accuracy)
 save_model(RandomForestClassifier_clf,"RandomForestClassifier")

@@ -11,7 +11,6 @@ Created on Sat Jul 21 11:48:07 2018
 import nltk
 import pandas as pd
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 from collections import Counter
 from nltk.corpus import stopwords
@@ -73,6 +72,8 @@ def data_cleaning(df):
     df = df.replace(r'\t',' ', regex=True) 
     df =  df.replace(',',' ') 
     df = df.replace(r'\\n',' ', regex=True)
+    df = df.replace(r'&','',regex=True)
+    df = df.replace(r'#','',regex=True)
     
     df= df.replace(r'span((.|\n)*)\}',' ',regex= True)
     df = df.replace(r'@font-face((.|\n)*)\}',' ',regex = True)
@@ -122,6 +123,13 @@ def visualise(df,feature_name):
     plt.hist(df[feature_name],)
 
 
+
+
+
+
+
+
+
 def getUnique(df, feature_name):
     
     '''
@@ -153,7 +161,7 @@ def categrorical_data_enc(Y):
 
 def GetFreqCount(x):
     '''
-    This method return dictonary of word frequencies
+    This method return dictonary of word with frequencies
     '''
     word_cnt = {}
     for row in x.ix[:,0]:
