@@ -70,7 +70,7 @@ def data_cleaning(df):
     df = df.replace(r'\n',' ', regex=True) 
     df = df.replace(r'\r',' ', regex=True) 
     df = df.replace(r'\t',' ', regex=True) 
-    df =  df.replace(',',' ') 
+    df = df.replace(',',' ') 
     df = df.replace(r'\\n',' ', regex=True)
     df = df.replace(r'&','',regex=True)
     df = df.replace(r'#','',regex=True)

@@ -21,17 +21,17 @@ import numpy as np
 
 
 
-from sklearn.model_selection import GridSearchCV
-
-
-parameters_svm = {'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False), 'clf__alpha': (1e-2, 1e-3),}
-
-gs_clf_svm = GridSearchCV(SGDClassifier_clf, parameters_svm,n_jobs=1)
-gs_clf_svm = gs_clf_svm.fit(X_train, Y_train)
-gs_clf_svm.best_score_
-gs_clf_svm.best_params_
-test = gs_clf_svm.predict(X_train)
-print(test)
+#from sklearn.model_selection import GridSearchCV
+#
+#
+#parameters_svm = {'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False), 'clf__alpha': (1e-2, 1e-3),}
+#
+#gs_clf_svm = GridSearchCV(SGDClassifier_clf, parameters_svm,n_jobs=1)
+#gs_clf_svm = gs_clf_svm.fit(X_train, Y_train)
+#gs_clf_svm.best_score_
+#gs_clf_svm.best_params_
+#test = gs_clf_svm.predict(X_train)
+#print(test)
 
 def MultinomialNB_implmenation(X_train, X_test, Y_train, Y_test,alpha = 1.0, fit_prior = True, class_prior = None):
     MultinomialNB_clf = Pipeline([('vect', CountVectorizer(stop_words='english')), ('tfidf', TfidfTransformer()), ('clf', MultinomialNB()) ])

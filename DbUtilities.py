@@ -34,3 +34,12 @@ def load_DBconfig(name='MYSQLDB.config'):
         
     config_file.close()    
     return TempDict
+
+
+def insert_dict_to_db(myDict,conn,table):
+    cursor = conn.cursor()
+    placeholders = ', '.join(['%s'] * len(myDict))
+    columns = ', '.join(myDict.keys())
+    sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (table, columns, placeholders)
+    result = cursor.execute(sql, list(myDict.values()))
+    conn.commit()
