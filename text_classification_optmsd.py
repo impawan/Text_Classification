@@ -5,6 +5,8 @@ Created on Sat Aug 25 11:48:11 2018
 @author: Pawan
 """
 
+import datetime
+StartTime = datetime.datetime.now().replace(microsecond=0)
 from dataPrep import *
 from DbUtilities import *
 from time import strftime
@@ -93,6 +95,6 @@ RandomForestClassifier_accuracy = round(RandomForestClassifier_accuracy*100,2)
 myDict['RandomForestClassifier_clf'] = RandomForestClassifier_accuracy
 save_model(RandomForestClassifier_clf,"RandomForestClassifier")
 
-insert_dict_to_db(myDict,DbConn,ConnParam['build_stats'])
+insert_dict_to_db(myDict,DbConn,ConnParam['build_stats'],StartTime)
 
 DbConn.close()

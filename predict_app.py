@@ -14,24 +14,32 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 import nltk
 from statistics import mode
 import re
+from DbUtilities import *
 
 
 
 
 def predict(text):
+    
+    ConnParam = load_DBconfig()
+    DbConn = conn(ConnParam['hostname'],ConnParam['port'],ConnParam['username'],ConnParam['password'],ConnParam['schema'])
+    ScoreDict = fetch_score_from_db()
     pattern = re.compile('[\W_]+')
     text = pattern.sub('', text)   
     text = text.lower().strip('\n')
     text = [text]
-    
+    VoteDict = {}
     
     file_object = open('./saved_models/MultinomialNB.pickle','rb')
     MultinomialNB_clf = pickle.load(file_object)
     
-#    file_object = open('./saved_models/BernoulliNB.pickle','rb')
-#    BernoulliNB_clf = pickle.load(file_object)
-#        
-#        
+
+    file_object = open('./saved_models/BernoulliNB.pickle','rb')
+    BernoulliNB_clf = pickle.load(file_object)
+    
+    
+    
+        
     file_object = open('./saved_models/SGDClassifier.pickle','rb')
     SGDClassifier_clf = pickle.load(file_object)
         
@@ -43,33 +51,28 @@ def predict(text):
 
     file_object = open('./saved_models/RandomForestClassifier.pickle','rb')
     RandomForestClassifier_clf = pickle.load(file_object)
-    vote = []
-    try:
-       
-        temp = MultinomialNB_clf.predict(text)
-        vote.append(temp[0])
+           
+    temp = MultinomialNB_clf.predict(text)
+    VoteDict['MultinomialNB_clf'] = temp
         
-#        temp = BernoulliNB_clf.predict(text)
-#        vote.append(temp[0])
+    temp = BernoulliNB_clf.predict(text)
+    VoteDict['BernoulliNB_clf'] = temp
         
         
-        temp = SGDClassifier_clf.predict(text)
-        vote.append(temp[0])
+    temp = SGDClassifier_clf.predict(text)
+    VoteDict['SGDClassifier_clf'] = temp
         
         
-        temp = LogisticRegression_clf.predict(text)
-        vote.append(temp[0])
+    temp = LogisticRegression_clf.predict(text)
+    VoteDict['LogisticRegression_clf'] = temp
         
-        temp = LinearSVC_clf.predict(text)
-        vote.append(temp[0]) 
+    temp = LinearSVC_clf.predict(text)
+    VoteDict['LinearSVC_clf'] = temp
         
-        temp = RandomForestClassifier_clf.predict(text)
-        vote.append(temp[0]) 
+    temp = RandomForestClassifier_clf.predict(text)
+    VoteDict['RandomForestClassifier_clf'] = temp 
         
         
-        ret = mode(vote)
-    except Exception as error:
-        ret = str(error)+" i.e  "+str(vote)
-        pass
-            
+    ret = mode(vote)
+    
     return str(ret)
