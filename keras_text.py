@@ -7,6 +7,7 @@ Created on Wed Aug  7 14:12:18 2019
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pandas as pd
 import numpy as np
+import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.cross_validation import train_test_split
 #from sklearn.naive_bayes import MultinomialNB
@@ -26,14 +27,16 @@ from sklearn.preprocessing import LabelBinarizer
 ##from keras.models import Sequential
 #from keras.layers import Activation, Dense, Dropout
 
-
+from wordcloud import WordCloud, STOPWORDS
 
 import tensorflow as tf
 from tensorflow import keras
-
-
+from nltk.corpus import stopwords 
+stop_words = list(stopwords.words('english')) 
+newStopWords = ['Regards','Thanks','like','product','warm']
+stop_words.extend(newStopWords)
 import tensorflow as tf
-
+from nltk import word_tokenize
 
 
 
@@ -51,8 +54,43 @@ df.info()
 
 
 
+patterns = [(r'won\'t', 'will not'), (r'can\'t', 'cannot'), (r'i\'m', 'i am'), (r'ain\'t', 'is not'), 
+            (r'(\w+)\'ll', '\g<1> will'), (r'(\w+)n\'t', '\g<1> not'), (r'(\w+)\'ve', '\g<1> have'), 
+            (r'(\w+)\'s', '\g<1> is'),(r'(\w+)\'re', '\g<1> are'), (r'(\w+)\'d', '\g<1> would'), (r'&', 'and'), 
+            (r'dammit', 'damn it'), (r'dont', 'do not'),(r'wont', 'will not'),(r'don\'t', 'do not'),(r'<br /> ', ' ')]
 
-from wordcloud import WordCloud, STOPWORDS
+
+
+def cleanhtml(raw_html):
+  cleanr = re.compile('<.*?>')
+  cleantext = re.sub(cleanr, '', raw_html)
+  return cleantext
+
+def replace_pattern (text):
+    for (rgx,replace) in patterns:
+        text = re.sub(rgx,replace,text)
+    return text
+
+def clean_text(text):
+    text = text.lower()
+    regex = re.compile('<.*?>')
+    text = re.sub(r"'(<.*?>)'", ' ', text)
+    text = re.sub(r"(\!)\1+", ' ', text)
+    text = re.sub(r"(\?)\1+", ' ', text)
+    text = replace_pattern(text)
+    text = cleanhtml(text)
+    text = re.sub(r"(\.)", ' ', text)
+    text = re.sub(r"\n", ' ', text)
+    regex = re.compile('\n')
+    clean_text = regex.sub(' ',text)
+    clean_text = ''.join(x for x in clean_text if( x.isalpha() or (x ==' ')))
+    tokenization = nltk.word_tokenize(clean_text)
+    sentence = ''
+    for w in tokenization :
+        if w not in stop_words:
+            sentence  = sentence+' '+w
+    return sentence
+
 
 def word_cloud(data,color='black'):
     wordcloud = WordCloud(background_color=color, stopwords=STOPWORDS, max_words=200, max_font_size=40,  random_state=23)
@@ -63,9 +101,10 @@ def word_cloud(data,color='black'):
 def stem(data):
     tokenization = nltk.word_tokenize(data)
     sentence = ''
-    for w in tokenization:
-        w= porter_stemmer.stem(w)
-        sentence  = sentence+' '+w
+    for w in tokenization :
+        if w not in stop_words:
+            w= porter_stemmer.stem(w.lower())
+            sentence  = sentence+' '+w
     return sentence
 
 def lemtize(data):
@@ -78,17 +117,39 @@ def lemtize(data):
     
 
 
+def GetFreqCount(x):
+    '''
+    This method return dictonary of word with frequencies
+    '''
+    word_cnt = {} 
+    for word in word_tokenize(x) :
+        if word in word_cnt:
+            word_cnt[word] = word_cnt[word]+1
+                
+        else:
+            word_cnt[word] = 1
+    return  word_cnt   
 
 
-df['Review Text'] = df['Review Text'].apply(stem)
-df['Review Text'] = df['Review Text'].apply(stem)
-df['Review Title'] = df['Review Text'].apply(lemtize)
-df['Review Title'] = df['Review Text'].apply(lemtize)
+
+
+#df['Review Text'] = df['Review Text'].apply(stem)
+#df['Review Title'] = df['Review Title'].apply(stem)
+#df['Review Text'] = df['Review Text'].apply(lemtize)
+#df['Review Title'] = df['Review Title'].apply(lemtize)
+df['Review Text'] = df['Review Text'].apply(clean_text)
+df['Review Title'] = df['Review Text'].apply(clean_text)
 
 
 
+df_combined = df['Review Text'] +' ' +df['Review Title']
+all_text = '\n'.join(df_combined)
 
-
+test = GetFreqCount(all_text)
+count_df = pd.DataFrame(list(test.items()))
+count_df.columns = ['word','count']
+count_df_top = count_df.sort_values(by=['count'],ascending=False).head(30)
+count_df_last = count_df.sort_values(by=['count'],ascending=True).head(30)
 #word_cloud(train['Review Text'])
 
 
@@ -152,23 +213,16 @@ x_train,x_test,y_train,y_test = train_test_split(x,y,test_size = .25, random_sta
 #model.add(keras.layers.Dense(16, activation=tf.nn.relu))
 #model.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
 
-vocab_size = 10000
+vocab_size = 100000
 input_layer = x_train.shape[1]
 classes = y_train.shape[1]
 model = keras.Sequential()
 #model.add(keras.layers.Embedding(vocab_size, 16))
 #model.add(keras.layers.GlobalAveragePooling1D())
 model.add(keras.layers.Dense(512, input_shape=(input_layer,)))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.3))
-#model.add(Dense(512))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.3))
-#model.add(Dense(classes))
-#model.add(Activation('softmax'))
-##model.add(keras.layers.GlobalAveragePooling1D())
-model.add(keras.layers.Dense(64, activation=tf.nn.relu))
-model.add(keras.layers.Dense(64, activation=tf.nn.relu))
+
+model.add(keras.layers.Dense(100, activation=tf.nn.relu))
+model.add(keras.layers.Dense(100, activation=tf.nn.relu))
 model.add(keras.layers.Dense(21, activation=tf.nn.sigmoid))
 model.summary()
 
